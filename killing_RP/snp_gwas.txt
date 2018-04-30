@@ -1,0 +1,1 @@
+SNP	CHR	POS	A1	A2	Casesnp1	1	1	A	G	snp;direct;nsa snp2	1	2	A	G	snp;swap;nsa snp3	1	3	A	G	snp;flip;nsasnp4	1	4	A	G	snp;swapflip;nsasnp5	1	5	T	A	snp;direct;sasnp6	1	6	T	A	snp;swap;sasnp7	1	7	A	AT	indel;directsnp8	1	8	A	AT	indel;swapsnp9	1	9	A	C	snp;multisnp10	1	10	A	G	nomatchsnp12	1	12	A	C	badallele

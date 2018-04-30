@@ -1,0 +1,1 @@
+rsid	chrom	position	alt	ref	Casesnp1	1	1	A	G	snp;direct;nsa snp2	1	2	G	A	snp;swap;nsa snp3	1	3	T	C	snp;flip;nsasnp4	1	4	C	T	snp;swapflip;nsasnp5	1	5	T	A	snp;direct;sasnp6	1	6	A	T	snp;swap;sasnp7	1	7	A	AT	indel;directsnp8	1	8	AT	A	indel;swapsnp9	1	9	A	C	snp;multisnp9	1	9	A	G	snp;multisnp11	1	11	A	G	nomatchsnp12	1	12	A	G	badallele
