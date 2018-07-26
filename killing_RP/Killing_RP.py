@@ -35,45 +35,36 @@ def add_strand_flip_annotation(reference_ref, reference_alt, ds_a1, ds_a2):
                      [hl.struct(swap = True,  flip = True)])
        .default(hl.empty_array(hl.tstruct(swap=hl.tbool, flip=hl.tbool))))  
 
-@typecheck(gwas_row_key=oneof(expr_locus(), expr_struct(), expr_str),
-           gwas_alleles=expr_array(expr_str),
-           reference_row_key=oneof(expr_locus(), expr_struct(), expr_str),
-           reference_alleles=expr_array(expr_str))
-def match_variants(gwas_row_key, gwas_alleles, reference_row_key, reference_alleles):
+def match_variants(gwas, reference):
     """
-    Assumes gwas row key and reference row key are same type and are keys of datasets already
+    Groups `gwas` and `reference` by the row key (e.g. locus) and then
+    compares the allele fields to determine whether a strand flip has occurred.
+
+    Assumes `gwas` row key and `reference` row key are the same type.
+    Assumes both `gwas` and `reference` have a row field `alleles` of
+    type <array<str>>. `alleles` cannot be a row key of the dataset.
     """
-    assert(gwas_row_key.dtype == reference_row_key.dtype) # FIXME: Allow locus to be matched with tstruct(contig, pos)
-    assert(gwas_row_key._indices == gwas_alleles._indices)
-    assert(reference_row_key._indices == reference_alleles._indices)
-    # FIXME: assert all row indices
+    def has_field_of_type(source, name, dtype):
+        return name in source.row and source[name].dtype == dtype
 
-    reference_alleles_fn = reference_alleles._ast.name
+    if not has_field_of_type(gwas, 'alleles', hl.tarray(hl.tstr)):
+        raise TypeError("'gwas' must have a row field 'alleles' with type <array<str>>")
 
-    gwas = gwas_row_key._indices.source 
-    reference = reference_row_key._indices.source
+    if not has_field_of_type(reference, 'alleles', hl.tarray(hl.tstr)):
+        raise TypeError("'reference' must have a row field 'alleles' with type <array<str>>")
+
+    if 'alleles' in gwas.key:
+        raise TypeError("'alleles' cannot be a row key in 'gwas'.")
+
+    if 'alleles' in reference.key:
+        raise TypeError("'alleles' cannot be a row key in 'reference'.")        
 
     reference = reference.collect_by_key()
 
-    matched_t = gwas.annotate(matches=hl.map(lambda x: x.annotate(match_alleles=add_strand_flip_annotation(
-        x[reference_alleles_fn][0], 
-        x[reference_alleles_fn][1], 
-        gwas_alleles[0], 
-        gwas_alleles[1])), reference[gwas_row_key].values))
+    matched = gwas.annotate(matches=hl.map(lambda x: x.annotate(match_alleles=add_strand_flip_annotation(
+        x.alleles[0], 
+        x.alleles[1], 
+        gwas.alleles[0], 
+        gwas.alleles[1])), reference[gwas.key].values))
 
-    # t = matched_t.annotate(matches=hl.map(lambda x: x.annotate(flip=add_strand_flip_annotation(x[???], x[???], matched_t[???], matched_t[???])) , matched_t.matches))
-
-    # t = t.select(t.locus, t.A1, t.A2, matches = hl.map(lambda x: x, t.matches))
-
-    # Table(gwas_row_key, 
-    #       matches[struct{
-    #                       ref_index = int, 
-    #                       ref_locus = locus, 
-    #                       ref_rsid = str, 
-    #                       ref_alleles = (ref,alt), 
-    #                       allele_swap = bool, 
-    #                       strand_flip = bool
-    #                   }, ...
-    #               ]
-    #       )
-    return matched_t
+    return matched
